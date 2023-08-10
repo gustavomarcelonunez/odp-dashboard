@@ -37,6 +37,7 @@ data <- read.csv("ALLplatform.csv")
 dataInstr <- read.csv("Instruments.csv")
 datacensus <- read.csv("censusByCategories.csv")
 datapapers <- read.csv("papers.csv")
+dataBuoy <- read.csv("data_site_buoy.csv")
 ```
 
 
@@ -77,21 +78,21 @@ valueBox(length(data$dive),
 ### Max. Depth Recorded (m)
 
 ```{r}
-valueBox(max(data$MaxDepth),
+valueBox(max(data$maxDepth),
          icon = "ion-arrow-graph-up-right" )
 ```
 
 ### Min. Depth Recorded (m)
 
 ```{r}
-valueBox(min(data$MinDepth),
+valueBox(min(data$minDepth),
          icon = "ion-arrow-graph-down-right" )
 ```
 
 ### Avg. Depth Recorded (m)
 
 ```{r}
-valueBox(round(mean(data$AvgDepth), digits = 2),
+valueBox(round(mean(data$avgDepth), digits = 2),
          icon = "ion-arrow-swap")
 ```
 
@@ -162,12 +163,10 @@ Row
 
 renderPlotly({
   
-fields <- data  %>% select(dive,MaxDepth,AvgDepth,MinDepth,duration,BottomTemp,SurfaceTemp)  %>%
+fields <- data  %>% select(dive,maxDepth,avgDepth,minDepth,duration,bottomTemp,surfaceTemp)  %>%
  filter(str_detect(data$claveU, num()))
 
-
 vars <- setdiff(names(fields), "dive")
-
 
 plots <- lapply(vars, function(var) {
   plot_ly(fields, x = ~dive, y = as.formula(paste0("~", var))) %>%
@@ -176,6 +175,33 @@ plots <- lapply(vars, function(var) {
 subplot(plots, nrows = length(plots), shareX = TRUE, titleX = TRUE) 
   
 })
+```
+
+Buoy data
+========================================
+Row
+-------------------------------
+### Isla Leones, Argentina
+
+```{r}
+renderPlotly({
+    fields <- dataBuoy %>%
+      select(timestamp, bottom_temperature_spotter, top_temperature_spotter)
+      # Convierte el formato de timestamp a un objeto de fecha y hora
+  fields$timestamp <- as.POSIXct(fields$timestamp, format = "%Y-%m-%dT%H:%M:%OS", tz = "UTC")
+  
+  # Formatea la fecha al estilo "dd/mm/yyyy"
+  fields$formatted_date <- format(fields$timestamp, format = "%d/%m/%Y")
+    
+    plots <- lapply(c("bottom_temperature_spotter", "top_temperature_spotter"), function(var) {
+      plot_ly(fields, x = ~timestamp, y = ~get(var), type = "scatter", mode = "lines", name = var) 
+    })
+    
+      plots[[1]] <- plots[[1]] %>% layout(yaxis = list(range = c(0, max(fields$significant_wave_height_spotter))))
+
+    
+    subplot(plots, nrows = length(plots), shareX = TRUE, titleX = TRUE)
+  })
 ```
 
 Platform Trips
@@ -200,15 +226,15 @@ Row
 ```{r}
  renderLeaflet({
   
-  trips <- data  %>% select(lati,longi,MaxDepth,duration,BottomTemp,SurfaceTemp)  %>%
+  trips <- data  %>% select(lati,longi,maxDepth,duration,bottomTemp,surfaceTemp)  %>%
           filter(str_detect(data$claveU, platform()))
   
   map <- leaflet(trips) %>% addTiles(group = "OpenStreetMap")
   map = map %>% addCircleMarkers(~longi, ~lati, radius = 1, 
        popup = paste("<b>Max Depht</b> (meters): ", trips$MaxDepth,
                                  "<b>Dive Duration</b> (seconds): ",trips$duration, 
-                                 "<b>Bottom temperature</b> (°C): ",trips$BottomTemp,
-                                 "<b>Surface temperature</b> (°C): ",trips$SurfaceTemp,
+                                 "<b>Bottom temperature</b> (°C): ",trips$bottomTemp,
+                                 "<b>Surface temperature</b> (°C): ",trips$surfaceTemp,
                                  sep = "<br/>"),
         weight = 2, opacity = 0.5, fill = TRUE, fillOpacity = 0.2, color = "red") %>%
   addPolylines(data=trips, lng = ~longi, lat = ~lati, stroke = TRUE, color = "green", weight = 2)%>% 
@@ -271,12 +297,11 @@ column
 
 ```{r}
 renderPlotly({
-plot_ly(datacensus, x=~datacensus$anio, y=~datacensus$total, color=~datacensus$categoria, type="bar") %>% layout(barmode = "stack", title = "Census by year and SES category",
+plot_ly(datacensus, x=~datacensus$year, y=~datacensus$total, color=~datacensus$category, type="bar") %>% layout(barmode = "stack", title = "Census by year and SES category",
          xaxis = list(title = "Years"),
          yaxis = list(title = "Amount"))
 })
 ```
-
 
 
 Bibliography
