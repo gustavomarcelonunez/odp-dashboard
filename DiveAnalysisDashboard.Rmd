@@ -187,11 +187,10 @@ Row
 renderPlotly({
     fields <- dataBuoy %>%
       select(timestamp, bottom_temperature_spotter, top_temperature_spotter)
-      # Convierte el formato de timestamp a un objeto de fecha y hora
-  fields$timestamp <- as.POSIXct(fields$timestamp, format = "%Y-%m-%dT%H:%M:%OS", tz = "UTC")
+
+    fields$timestamp <- as.POSIXct(fields$timestamp, format = "%Y-%m-%dT%H:%M:%OS", tz = "UTC")
   
-  # Formatea la fecha al estilo "dd/mm/yyyy"
-  fields$formatted_date <- format(fields$timestamp, format = "%d/%m/%Y")
+    fields$formatted_date <- format(fields$timestamp, format = "%d/%m/%Y")
     
     plots <- lapply(c("bottom_temperature_spotter", "top_temperature_spotter"), function(var) {
       plot_ly(fields, x = ~timestamp, y = ~get(var), type = "scatter", mode = "lines", name = var) 
