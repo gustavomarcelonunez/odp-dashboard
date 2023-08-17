@@ -29,6 +29,8 @@ library(factoextra)
 library(shiny)
 library(mregions)
 library(sf)
+library(zoo)
+library(shinyWidgets)
 ```
 
 
@@ -177,30 +179,77 @@ subplot(plots, nrows = length(plots), shareX = TRUE, titleX = TRUE)
 })
 ```
 
-Buoy data
+Buoy Data
 ========================================
+
+Inputs {.sidebar}
+-----------------------------------------------------------------------
+
+```{r}
+first_date <- min(as.Date(dataBuoy$timestamp))
+last_date <- max(as.Date(dataBuoy$timestamp))
+
+
+dateRangeInput(inputId = "dateRange", label = h3("Date Range"), 
+               start = first_date, end = last_date,
+               min = first_date, max = last_date,
+               format = "yyyy-mm-dd")
+
+HTML("<h3>Buoy Location</h3>")
+
+renderLeaflet({
+    leaflet() %>%
+    addTiles() %>%
+    setView(lng = -65.607, lat = -45.043, zoom = 12) %>%
+    addMarkers(lng = -65.607, lat = -45.043)
+  })
+
+```
+
 Row
 -------------------------------
 ### Isla Leones, Argentina
 
 ```{r}
 renderPlotly({
-    fields <- dataBuoy %>%
-      select(timestamp, bottom_temperature_spotter, top_temperature_spotter)
-
-    fields$timestamp <- as.POSIXct(fields$timestamp, format = "%Y-%m-%dT%H:%M:%OS", tz = "UTC")
+  fields <- dataBuoy %>%
+    select(timestamp,significant_wave_height_spotter, wind_speed_spotter, bottom_temperature_spotter, top_temperature_spotter)
   
-    fields$formatted_date <- format(fields$timestamp, format = "%d/%m/%Y")
-    
-    plots <- lapply(c("bottom_temperature_spotter", "top_temperature_spotter"), function(var) {
-      plot_ly(fields, x = ~timestamp, y = ~get(var), type = "scatter", mode = "lines", name = var) 
-    })
-    
-      plots[[1]] <- plots[[1]] %>% layout(yaxis = list(range = c(0, max(fields$significant_wave_height_spotter))))
+  fields$timestamp <- as.POSIXct(fields$timestamp, format = "%Y-%m-%dT%H:%M:%OS", tz = "UTC")
+  fields$formatted_date <- format(fields$timestamp, format = "%d/%m/%Y")
 
-    
-    subplot(plots, nrows = length(plots), shareX = TRUE, titleX = TRUE)
-  })
+  fields$bottom_temperature_spotter <- na.approx(fields$bottom_temperature_spotter)
+  fields$top_temperature_spotter <- na.approx(fields$top_temperature_spotter)
+
+  mean_temp <- (fields$bottom_temperature_spotter + fields$top_temperature_spotter) / 2
+
+  plot <- plot_ly(fields, x = ~timestamp) %>%
+    add_trace(y = ~bottom_temperature_spotter, type = "scatter", mode = "lines", name = "Bottom Temp") %>%
+    add_trace(y = ~top_temperature_spotter, type = "scatter", mode = "lines", name = "Top Temp") %>%
+    add_trace(y = mean_temp, type = "scatter", mode = "lines", name = "Mean Temp", line = list(dash = 'solid'))
+
+  plot_temperatures <- plot_ly(fields, x = ~timestamp) %>%
+    add_trace(y = ~bottom_temperature_spotter, type = "scatter", mode = "lines", name = "Bottom Temp") %>%
+    add_trace(y = ~top_temperature_spotter, type = "scatter", mode = "lines", name = "Top Temp") %>%
+    add_trace(y = mean_temp, type = "scatter", mode = "lines", name = "Mean Temp", line = list(dash = 'solid'))
+  
+  plot_temperatures<- plot_temperatures %>% layout(
+    yaxis = list(title = "Temperatures (°C)", range = c(0, max(fields$significant_wave_height_spotter))))
+
+  plot_wave_height <- plot_ly(fields, x = ~timestamp) %>%
+    add_trace(y = ~significant_wave_height_spotter, type = "scatter", mode = "markers", name = "Wave Height", marker=list(size = 4))
+  
+  plot_wave_height<- plot_wave_height %>% layout(
+    yaxis = list(title = "Wave height (mts)", range = c(0, max(fields$significant_wave_height_spotter))))
+
+  plot_wind_speed <- plot_ly(fields, x = ~timestamp) %>%
+    add_trace(y = ~wind_speed_spotter, type = "scatter", mode = "markers", name = "Wind Speed", marker=list(size = 4))
+  
+  plot_wind_speed<- plot_wind_speed %>% layout(
+    yaxis = list(title = "Wind speed (km/h)", range = c(0, max(fields$significant_wave_height_spotter))))
+
+  subplot(plot_temperatures, plot_wave_height, plot_wind_speed, nrows = 3, shareX = TRUE, titleX = TRUE, titleY = TRUE)
+})
 ```
 
 Platform Trips
