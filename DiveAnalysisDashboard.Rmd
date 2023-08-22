@@ -31,6 +31,7 @@ library(mregions)
 library(sf)
 library(zoo)
 library(shinyWidgets)
+library(tidyr)
 ```
 
 
@@ -41,8 +42,6 @@ datacensus <- read.csv("censusByCategories.csv")
 datapapers <- read.csv("papers.csv")
 dataBuoy <- read.csv("data_site_buoy.csv")
 ```
-
-
 
 Dive Statistics
 =====================================
@@ -213,40 +212,53 @@ Row
 ```{r}
 renderPlotly({
   fields <- dataBuoy %>%
-    select(timestamp,significant_wave_height_spotter, wind_speed_spotter, bottom_temperature_spotter, top_temperature_spotter)
+    select(timestamp, significant_wave_height_spotter, wind_speed_spotter, bottom_temperature_spotter, top_temperature_spotter)
   
   fields$timestamp <- as.POSIXct(fields$timestamp, format = "%Y-%m-%dT%H:%M:%OS", tz = "UTC")
   fields$formatted_date <- format(fields$timestamp, format = "%d/%m/%Y")
 
-  fields$bottom_temperature_spotter <- na.approx(fields$bottom_temperature_spotter)
-  fields$top_temperature_spotter <- na.approx(fields$top_temperature_spotter)
+  filtered_fields <- fields %>% filter(timestamp >= input$dateRange[1] & timestamp <= input$dateRange[2])
 
-  mean_temp <- (fields$bottom_temperature_spotter + fields$top_temperature_spotter) / 2
+  filtered_fields$bottom_temperature_spotter <- na.approx(filtered_fields$bottom_temperature_spotter)
+  filtered_fields$top_temperature_spotter <- na.approx(filtered_fields$top_temperature_spotter)
 
-  plot <- plot_ly(fields, x = ~timestamp) %>%
+  mean_temp <- (filtered_fields$bottom_temperature_spotter + filtered_fields$top_temperature_spotter) / 2
+  
+  
+  
+  filtered_fields$significant_wave_height_spotter <- approx(filtered_fields$timestamp, 
+                                                          filtered_fields$significant_wave_height_spotter,
+                                                          xout = filtered_fields$timestamp)$y
+  
+  filtered_fields$wind_speed_spotter <- approx(filtered_fields$timestamp, 
+                                                          filtered_fields$wind_speed_spotter,
+                                                          xout = filtered_fields$timestamp)$y
+  
+
+  plot <- plot_ly(filtered_fields, x = ~timestamp) %>%
     add_trace(y = ~bottom_temperature_spotter, type = "scatter", mode = "lines", name = "Bottom Temp") %>%
     add_trace(y = ~top_temperature_spotter, type = "scatter", mode = "lines", name = "Top Temp") %>%
     add_trace(y = mean_temp, type = "scatter", mode = "lines", name = "Mean Temp", line = list(dash = 'solid'))
 
-  plot_temperatures <- plot_ly(fields, x = ~timestamp) %>%
+  plot_temperatures <- plot_ly(filtered_fields, x = ~timestamp) %>%
     add_trace(y = ~bottom_temperature_spotter, type = "scatter", mode = "lines", name = "Bottom Temp") %>%
     add_trace(y = ~top_temperature_spotter, type = "scatter", mode = "lines", name = "Top Temp") %>%
     add_trace(y = mean_temp, type = "scatter", mode = "lines", name = "Mean Temp", line = list(dash = 'solid'))
   
   plot_temperatures<- plot_temperatures %>% layout(
-    yaxis = list(title = "Temperatures (°C)", range = c(0, max(fields$significant_wave_height_spotter))))
+    yaxis = list(title = "Temperatures (°C)", range = c(0, max(filtered_fields$significant_wave_height_spotter))))
 
-  plot_wave_height <- plot_ly(fields, x = ~timestamp) %>%
-    add_trace(y = ~significant_wave_height_spotter, type = "scatter", mode = "markers", name = "Wave Height", marker=list(size = 4))
+  plot_wave_height <- plot_ly(filtered_fields, x = ~timestamp) %>%
+    add_trace(y = ~significant_wave_height_spotter, type = "scatter", mode = "lines", name = "Wave Height")
   
   plot_wave_height<- plot_wave_height %>% layout(
-    yaxis = list(title = "Wave height (mts)", range = c(0, max(fields$significant_wave_height_spotter))))
+    yaxis = list(title = "Wave height (mts)", range = c(0, max(filtered_fields$significant_wave_height_spotter))))
 
-  plot_wind_speed <- plot_ly(fields, x = ~timestamp) %>%
-    add_trace(y = ~wind_speed_spotter, type = "scatter", mode = "markers", name = "Wind Speed", marker=list(size = 4))
+  plot_wind_speed <- plot_ly(filtered_fields, x = ~timestamp) %>%
+    add_trace(y = ~wind_speed_spotter, type = "scatter", mode = "lines", name = "Wind Speed")
   
   plot_wind_speed<- plot_wind_speed %>% layout(
-    yaxis = list(title = "Wind speed (km/h)", range = c(0, max(fields$significant_wave_height_spotter))))
+    yaxis = list(title = "Wind speed (km/h)", range = c(0, max(filtered_fields$significant_wave_height_spotter))))
 
   subplot(plot_temperatures, plot_wave_height, plot_wind_speed, nrows = 3, shareX = TRUE, titleX = TRUE, titleY = TRUE)
 })
