@@ -237,13 +237,15 @@ renderPlotly({
 
   plot <- plot_ly(filtered_fields, x = ~timestamp) %>%
     add_trace(y = ~top_temperature_spotter, type = "scatter", mode = "lines", name = "Top Temp") %>%
-    add_trace(y = ~bottom_temperature_spotter, type = "scatter", mode = "lines", name = "Bottom Temp") %>%
-    add_trace(y = mean_temp, type = "scatter", mode = "lines", name = "Mean Temp", line = list(dash = 'solid'))
+        add_trace(y = mean_temp, type = "scatter", mode = "lines", name = "Mean Temp", line = list(dash = 'solid')) %>%
+    add_trace(y = ~bottom_temperature_spotter, type = "scatter", mode = "lines", name = "Bottom Temp")
+
 
   plot_temperatures <- plot_ly(filtered_fields, x = ~timestamp) %>%
     add_trace(y = ~top_temperature_spotter, type = "scatter", mode = "lines", name = "Top Temp") %>%
-    add_trace(y = ~bottom_temperature_spotter, type = "scatter", mode = "lines", name = "Bottom Temp") %>%
-    add_trace(y = mean_temp, type = "scatter", mode = "lines", name = "Mean Temp", line = list(dash = 'solid'))
+    add_trace(y = mean_temp, type = "scatter", mode = "lines", name = "Mean Temp", line = list(dash = 'solid')) %>%
+      add_trace(y = ~bottom_temperature_spotter, type = "scatter", mode = "lines", name = "Bottom Temp")
+
   
   plot_temperatures<- plot_temperatures %>% layout(
     yaxis = list(title = "Temperatures (°C)", range = c(0, max(filtered_fields$significant_wave_height_spotter))))
