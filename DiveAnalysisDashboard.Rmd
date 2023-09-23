@@ -297,23 +297,7 @@ y <- reactive({
 renderDataTable({
   results <- y()
   
-    if (nrow(results) == 0) {
-    # Si el DataFrame está vacío, crear un DataFrame vacío con las mismas columnas
-      results <- data.frame(
-        'Wikidata item' = character(0),
-        'scientific_name' = character(0),
-        'common_name' = character(0),
-        'status' = character(0),
-        'rangemap' = character(0),
-        'length' = character(0),
-        'life_expectency' = character(0),
-        'height' = character(0),
-        'mass' = character(0)
-      )
-    }
-  
   m<<- data.frame(paste0("<a href='",results$item,"'>",results$item,"</a>"),results$scientific_name,results$common_name,paste0("<a href='",results$status,"'>",results$status,"</a>"), paste0("<img src='",results$rangemap,"' height=42></img>"),results$length,results$life_expectency, results$height,results$mass)
-
 
 colnames(m) = c('Wikidata item','scientific_name','common_name','status','rangemap','length','life_expectency','height','mass')
 
