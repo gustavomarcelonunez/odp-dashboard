@@ -32,6 +32,8 @@ library(sf)
 library(zoo)
 library(shinyWidgets)
 library(tidyr)
+library(reticulate)
+library(WikidataQueryServiceR)
 ```
 
 
@@ -41,6 +43,7 @@ dataInstr <- read.csv("Instruments.csv")
 datacensus <- read.csv("censusByCategories.csv")
 datapapers <- read.csv("papers.csv")
 dataBuoy <- read.csv("data_site_buoy.csv")
+map_rendered <- reactiveVal(FALSE)
 ```
 
 Dive Statistics
@@ -196,20 +199,24 @@ dateRangeInput(inputId = "dateRange", label = h3("Date Range"),
 
 HTML("<h3>Buoy Location</h3>")
 
-renderLeaflet({
+
+output$mymap = renderLeaflet({
     leaflet() %>%
-    addTiles() %>%
-    setView(lng = -65.607, lat = -45.043, zoom = 12) %>%
-    addMarkers(lng = -65.607, lat = -45.043)
-  })
+      addTiles() %>%
+      setView(lng = -65.607, lat = -45.043, zoom = 12) %>%
+      addMarkers(lng = -65.607, lat = -45.043)
+})
+leafletOutput('mymap')
 
 ```
 
-Row
+Row {.tabset}
 -------------------------------
 ### Isla Leones, Argentina
 
 ```{r}
+htmltools::tags$p("*Wave height and Wind speed missing data values are approximated using a specialized function to enable visualization.")
+
 renderPlotly({
   fields <- dataBuoy %>%
     select(timestamp, significant_wave_height_spotter, wind_speed_spotter, bottom_temperature_spotter, top_temperature_spotter)
@@ -224,8 +231,6 @@ renderPlotly({
 
   mean_temp <- (filtered_fields$bottom_temperature_spotter + filtered_fields$top_temperature_spotter) / 2
   
-  
-  
   filtered_fields$significant_wave_height_spotter <- approx(filtered_fields$timestamp, 
                                                           filtered_fields$significant_wave_height_spotter,
                                                           xout = filtered_fields$timestamp)$y
@@ -233,19 +238,17 @@ renderPlotly({
   filtered_fields$wind_speed_spotter <- approx(filtered_fields$timestamp, 
                                                           filtered_fields$wind_speed_spotter,
                                                           xout = filtered_fields$timestamp)$y
-  
 
   plot <- plot_ly(filtered_fields, x = ~timestamp) %>%
     add_trace(y = ~top_temperature_spotter, type = "scatter", mode = "lines", name = "Top Temp") %>%
-        add_trace(y = mean_temp, type = "scatter", mode = "lines", name = "Mean Temp", line = list(dash = 'solid')) %>%
+    add_trace(y = mean_temp, type = "scatter", mode = "lines", name = "Mean Temp", line = list(dash = 'solid')) %>%
     add_trace(y = ~bottom_temperature_spotter, type = "scatter", mode = "lines", name = "Bottom Temp")
 
 
   plot_temperatures <- plot_ly(filtered_fields, x = ~timestamp) %>%
     add_trace(y = ~top_temperature_spotter, type = "scatter", mode = "lines", name = "Top Temp") %>%
     add_trace(y = mean_temp, type = "scatter", mode = "lines", name = "Mean Temp", line = list(dash = 'solid')) %>%
-      add_trace(y = ~bottom_temperature_spotter, type = "scatter", mode = "lines", name = "Bottom Temp")
-
+    add_trace(y = ~bottom_temperature_spotter, type = "scatter", mode = "lines", name = "Bottom Temp")
   
   plot_temperatures<- plot_temperatures %>% layout(
     yaxis = list(title = "Temperatures (°C)", range = c(0, max(filtered_fields$significant_wave_height_spotter))))
@@ -262,10 +265,62 @@ renderPlotly({
   plot_wind_speed<- plot_wind_speed %>% layout(
     yaxis = list(title = "Wind speed (km/h)", range = c(0, max(filtered_fields$significant_wave_height_spotter))))
 
-  subplot(plot_temperatures, plot_wave_height, plot_wind_speed, nrows = 3, shareX = TRUE, titleX = TRUE, titleY = TRUE)
+  subplot(plot_temperatures, plot_wave_height, plot_wind_speed, nrows = 3, shareX = TRUE, titleX = TRUE, titleY = TRUE)%>%
+    layout(heights = "50%")
 })
 ```
+### Otra pestaña
 
+
+```{r}
+source_python('queryListOfSpeciesWikidata.py')
+species <- queryListOfSpecies()
+
+selectInput(inputId = "Specie", label = h5("Species from BiGe-Onto Endpoint"),
+                  choices = unique(species),
+            selected = "Mirounga leonina")
+
+selectionSpecie <- reactive({input$Specie})
+source_python('querySpecieWikidata.py')
+
+y <- reactive({
+  querySpecieResult <- querySpecie(selectionSpecie())
+  return(querySpecieResult)
+})
+
+# Continuar aquí. Imrimir el valor de y() para ver la salida. Trabajar en la tabla
+
+
+
+
+
+renderDataTable({
+  results <- y()
+  
+    if (nrow(results) == 0) {
+    # Si el DataFrame está vacío, crear un DataFrame vacío con las mismas columnas
+      results <- data.frame(
+        'Wikidata item' = character(0),
+        'scientific_name' = character(0),
+        'common_name' = character(0),
+        'status' = character(0),
+        'rangemap' = character(0),
+        'length' = character(0),
+        'life_expectency' = character(0),
+        'height' = character(0),
+        'mass' = character(0)
+      )
+    }
+  
+  m<<- data.frame(paste0("<a href='",results$item,"'>",results$item,"</a>"),results$scientific_name,results$common_name,paste0("<a href='",results$status,"'>",results$status,"</a>"), paste0("<img src='",results$rangemap,"' height=42></img>"),results$length,results$life_expectency, results$height,results$mass)
+
+
+colnames(m) = c('Wikidata item','scientific_name','common_name','status','rangemap','length','life_expectency','height','mass')
+
+DT::datatable(m, class = 'cell-border stripe',fillContainer = T,options = list(autoWidth = TRUE,scrollX = TRUE, dom = 't'), escape = FALSE)
+})
+
+```
 Platform Trips
 ========================================
 
@@ -326,9 +381,8 @@ selectInput("n_points", label = "MinPts:",
 points <- reactive(input$n_points)
 
 sliderInput("eps_adjust", label = "eps:",
-            min = 0.01, max = 0.20, value = 0.15, step = 0.02)
+           min = 0.01, max = 0.20, value = 0.15, step = 0.02)
 epsvalue <- reactive(input$eps_adjust)
-
 
 ```
 
@@ -338,13 +392,25 @@ row
 ### Cluster analysis using dbscan
 
 ```{r}
-renderPlot({
+renderPlotly({
   
   locs <- dplyr::select(data,lati,longi)
-  # scalling the data points.
+  
+  #scalling the data points.
   locs.scaled = scale(locs,center = T,scale = T)
+  # esta sección es la que rompe los mapas
   db = dbscan::dbscan(locs.scaled,eps=epsvalue(),minPts = as.numeric(points()))
 
+  hclust_result <- hclust(dist(locs.scaled))
+  clusters <- cutree(hclust_result, k = as.numeric(points()))
+
+  plot_data <- data.frame(lati = data$lati, longi = data$longi, Cluster = factor(clusters))
+
+  fig <- plot_ly(data = plot_data, x = ~lati, y = ~longi, color = ~Cluster) %>%
+      add_markers()
+    
+  fig
+  
   factoextra::fviz_cluster(db,locs.scaled,stand = F,ellipse = T,geom = "point")
 })
 ```
