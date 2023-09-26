@@ -145,7 +145,7 @@ renderPlotly({
 ```
 
 Dive Analysis
-========================================
+=====================================
 
 Inputs {.sidebar}
 -----------------------------------------------------------------------
@@ -159,7 +159,7 @@ num <- reactive(input$PlatformID)
 
 ```
 
-Row
+Row {.tabset}
 -------------------------------
 ### Dive analysis (dives, dephts and temperatures)
 
@@ -181,11 +181,36 @@ subplot(plots, nrows = length(plots), shareX = TRUE, titleX = TRUE)
 })
 ```
 
+### Trips made by all platforms
+
+```{r}
+ renderLeaflet({
+  
+  trips <- data  %>% select(lati,longi,maxDepth,duration,bottomTemp,surfaceTemp)  %>%
+          filter(str_detect(data$claveU, num()))
+  
+  map <- leaflet(trips) %>% addTiles(group = "OpenStreetMap")
+  map = map %>% addCircleMarkers(~longi, ~lati, radius = 1, 
+       popup = paste("<b>Max Depht</b> (meters): ", trips$MaxDepth,
+                                 "<b>Dive Duration</b> (seconds): ",trips$duration, 
+                                 "<b>Bottom temperature</b> (°C): ",trips$bottomTemp,
+                                 "<b>Surface temperature</b> (°C): ",trips$surfaceTemp,
+                                 sep = "<br/>"),
+        weight = 2, opacity = 0.5, fill = TRUE, fillOpacity = 0.2, color = "red") %>%
+  addPolylines(data=trips, lng = ~longi, lat = ~lati, stroke = TRUE, color = "green", weight = 2)%>% 
+  addTiles() %>% 
+  addProviderTiles(providers$Esri.NatGeoWorldMap)%>%
+  addMeasure()%>%
+  addMeasure(  position = "bottomleft",  primaryLengthUnit = "kilometers",  primaryAreaUnit = "sqkilometers",  activeColor = "#3D535D",  completedColor = "#7D4479",  localization = "en")
+  
+})
+```
+
 Buoy Data
-========================================
+=====================================
 
 Inputs {.sidebar}
------------------------------------------------------------------------
+--------------------------------------
 
 ```{r}
 first_date <- min(as.Date(dataBuoy$timestamp))
@@ -200,17 +225,16 @@ dateRangeInput(inputId = "dateRange", label = h3("Date Range"),
 HTML("<h3>Buoy Location</h3>")
 
 
-output$mymap = renderLeaflet({
+renderLeaflet({
     leaflet() %>%
       addTiles() %>%
       setView(lng = -65.607, lat = -45.043, zoom = 12) %>%
       addMarkers(lng = -65.607, lat = -45.043)
 })
-leafletOutput('mymap')
 
 ```
 
-Row {.tabset}
+Row
 -------------------------------
 ### Isla Leones, Argentina
 
@@ -269,87 +293,10 @@ renderPlotly({
     layout(heights = "50%")
 })
 ```
-### Otra pestaña
-
-
-```{r}
-source_python('queryListOfSpeciesWikidata.py')
-species <- queryListOfSpecies()
-
-selectInput(inputId = "Specie", label = h5("Species from BiGe-Onto Endpoint"),
-                  choices = unique(species),
-            selected = "Mirounga leonina")
-
-selectionSpecie <- reactive({input$Specie})
-source_python('querySpecieWikidata.py')
-
-y <- reactive({
-  querySpecieResult <- querySpecie(selectionSpecie())
-  return(querySpecieResult)
-})
-
-# Continuar aquí. Imrimir el valor de y() para ver la salida. Trabajar en la tabla
-
-
-
-
-
-renderDataTable({
-  results <- y()
-  
-  m<<- data.frame(paste0("<a href='",results$item,"'>",results$item,"</a>"),results$scientific_name,results$common_name,paste0("<a href='",results$status,"'>",results$status,"</a>"), paste0("<img src='",results$rangemap,"' height=42></img>"),results$length,results$life_expectency, results$height,results$mass)
-
-colnames(m) = c('Wikidata item','scientific_name','common_name','status','rangemap','length','life_expectency','height','mass')
-
-DT::datatable(m, class = 'cell-border stripe',fillContainer = T,options = list(autoWidth = TRUE,scrollX = TRUE, dom = 't'), escape = FALSE)
-})
-
-```
-Platform Trips
-========================================
-
-Inputs {.sidebar}
------------------------------------------------------------------------
-
-```{r}
-selectInput(inputId = "PlatformTrip", label = h3("Select Platform"),
-                  choices = unique(data$claveU),
-                  selected = "ANIF")
-
-platform <- reactive(input$PlatformTrip)
-
-```
-
-Row
--------------------------------
-### Trips made by all platforms
-
-```{r}
- renderLeaflet({
-  
-  trips <- data  %>% select(lati,longi,maxDepth,duration,bottomTemp,surfaceTemp)  %>%
-          filter(str_detect(data$claveU, platform()))
-  
-  map <- leaflet(trips) %>% addTiles(group = "OpenStreetMap")
-  map = map %>% addCircleMarkers(~longi, ~lati, radius = 1, 
-       popup = paste("<b>Max Depht</b> (meters): ", trips$MaxDepth,
-                                 "<b>Dive Duration</b> (seconds): ",trips$duration, 
-                                 "<b>Bottom temperature</b> (°C): ",trips$bottomTemp,
-                                 "<b>Surface temperature</b> (°C): ",trips$surfaceTemp,
-                                 sep = "<br/>"),
-        weight = 2, opacity = 0.5, fill = TRUE, fillOpacity = 0.2, color = "red") %>%
-  addPolylines(data=trips, lng = ~longi, lat = ~lati, stroke = TRUE, color = "green", weight = 2)%>% 
-  addTiles() %>% 
-  addProviderTiles(providers$Esri.NatGeoWorldMap)%>%
-  addMeasure()%>%
-  addMeasure(  position = "bottomleft",  primaryLengthUnit = "kilometers",  primaryAreaUnit = "sqkilometers",  activeColor = "#3D535D",  completedColor = "#7D4479",  localization = "en")
-  
-})
-```
 
 
 Cluster Analysis
-========================================
+=====================================
 
 Column {.sidebar}
 -----------------------------------------------------------------------
@@ -400,7 +347,7 @@ renderPlotly({
 ```
 
 Census Statistics
-========================================
+=====================================
 
 column
 -------------------------------------
@@ -416,10 +363,46 @@ plot_ly(datacensus, x=~datacensus$year, y=~datacensus$total, color=~datacensus$c
 ```
 
 
-Bibliography
-========================================
+Linked Data
+=====================================
+Inputs {.sidebar}
+--------------------------------------
+```{r}
+source_python('queryListOfSpeciesWikidata.py')
+species <- queryListOfSpecies()
 
-Row
+selectInput(inputId = "Specie", label = h3("Species from BiGe-Onto Endpoint"),
+                  choices = unique(species),
+            selected = "Mirounga leonina")
+
+selectionSpecie <- reactive({input$Specie})
+```
+
+Row {.tabset}
+-------------------------------
+### Specie Information
+```{r}
+source_python('querySpecieWikidata.py')
+renderDataTable({
+  results <- querySpecieResult <- querySpecie(selectionSpecie())
+  
+  m<<- data.frame(paste0("<a href='",results$item,"'>",results$item,"</a>"),results$scientific_name,results$common_name,paste0("<a href='",results$status,"'>",results$status,"</a>"), paste0("<img src='",results$rangemap,"' height=42></img>"),results$length,results$life_expectency, results$height,results$mass)
+
+colnames(m) = c('Wikidata item','scientific_name','common_name','status','rangemap','length','life_expectency','height','mass')
+
+DT::datatable(m, class = 'cell-border stripe',fillContainer = T,options = list(autoWidth = TRUE,scrollX = TRUE, dom = 't'), escape = FALSE)
+})
+
+```
+### Links to biodiversity databases
+
+
+### Results from NCBI Taxonomy endpoint
+
+More
+=====================================
+
+Row {.tabset}
 -------------------------------
 ### Papers associated with each platform
 
@@ -440,8 +423,7 @@ renderDataTable({
 })
 ```
 
-About
-========================================
+### About
 <font size="5">SES Dashboard: A linked data platform to manage data on Southern Elephant Seals</font> 
 
 SES Dashboard is a linked data platform developed to manage information of Southern Elephant Seals (Mirounga leonina, Linnaeus 1758) from Península Valdés colony (Patagonia, Argentina), collected over more than two decades of research.

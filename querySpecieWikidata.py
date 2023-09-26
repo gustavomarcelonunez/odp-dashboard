@@ -1,7 +1,6 @@
 from SPARQLWrapper import SPARQLWrapper2
 import pandas
 from pandas import DataFrame
-from rdflib.plugins.sparql.processor import SPARQLResult
 
 def querySpecie(aSpecie):
  
