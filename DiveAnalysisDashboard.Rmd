@@ -33,7 +33,6 @@ library(zoo)
 library(shinyWidgets)
 library(tidyr)
 library(reticulate)
-library(WikidataQueryServiceR)
 ```
 
 
@@ -159,7 +158,7 @@ num <- reactive(input$PlatformID)
 
 ```
 
-Row {.tabset}
+Row
 -------------------------------
 ### Dive analysis (dives, dephts and temperatures)
 
@@ -369,36 +368,70 @@ Inputs {.sidebar}
 --------------------------------------
 ```{r}
 source_python('queryListOfSpeciesWikidata.py')
-species <- queryListOfSpecies()
+species <<- queryListOfSpecies()
+
+speciesName <- species$name
+speciesID <- species$wikidataID
 
 selectInput(inputId = "Specie", label = h3("Species from BiGe-Onto Endpoint"),
-                  choices = unique(species),
+                  choices = unique(speciesName),
             selected = "Mirounga leonina")
 
-selectionSpecie <- reactive({input$Specie})
+selectionSpecie <- reactive({
+  input$Specie
+  })
+
+selectedSpeciesID <- reactive({
+  selectedName <- selectionSpecie()
+  speciesID[which(speciesName == selectedName)]
+})
+
 ```
 
-Row {.tabset}
+Row
 -------------------------------
 ### Specie Information
 ```{r}
 source_python('querySpecieWikidata.py')
 renderDataTable({
-  results <- querySpecieResult <- querySpecie(selectionSpecie())
+  results <<- querySpecie(selectionSpecie())
   
   m<<- data.frame(paste0("<a href='",results$item,"'>",results$item,"</a>"),results$scientific_name,results$common_name,paste0("<a href='",results$status,"'>",results$status,"</a>"), paste0("<img src='",results$rangemap,"' height=42></img>"),results$length,results$life_expectency, results$height,results$mass)
 
-colnames(m) = c('Wikidata item','scientific_name','common_name','status','rangemap','length','life_expectency','height','mass')
+  colnames(m) = c('Wikidata item','scientific_name','common_name','status','rangemap','length','life_expectency','height','mass')
 
-DT::datatable(m, class = 'cell-border stripe',fillContainer = T,options = list(autoWidth = TRUE,scrollX = TRUE, dom = 't'), escape = FALSE)
+  DT::datatable(m, class = 'cell-border stripe',fillContainer = T,options = list(autoWidth = TRUE,scrollX = TRUE, dom = 't'), escape = FALSE)
 })
 
 ```
+Row 
+-------------------------------
 ### Links to biodiversity databases
+```{r}
+source_python('queryBiodiversityInfoWikidata.py')
 
+renderDataTable({
+  parsedSpecieId <- sub("^.*Q([0-9]+).*$", "\\1", selectedSpeciesID())
+  ext_link <- queryBiodiversityInfo(parsedSpecieId)
+  
+  n <- data.frame(ext_link$propertyLabel,paste0("<a href='",ext_link$link,"'target='_blank'>",ext_link$link,"</a>"))
+
+  colnames(n) = c('propertyLabel','link')
+
+ # ncbi_id <-n[n$Database == 'NCBI taxonomy ID',] 
+
+  DT::datatable(n, class = 'cell-border stripe',fillContainer = T, options = list(autoWidth = FALSE,scrollX = TRUE, width = '100%', dom = 't', pageLength = -1), escape = FALSE)
+})
+```
 
 ### Results from NCBI Taxonomy endpoint
-
+```{r}
+reactive({
+  print(species)
+  print(selectionSpecie())
+  print(selectedSpeciesID())
+})
+```
 More
 =====================================
 

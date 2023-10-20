@@ -24,10 +24,11 @@ def querySpecie(aSpecie):
       }
     FILTER(LANGMATCHES(LANG(?common_name), \"en\"))
     FILTER(lcase(str(?scientific_name)) IN (lcase(str(\""""+ aSpecie +"""\"))))
-    
-    SERVICE wikibase:label { bd:serviceParam wikibase:language \"en\". }
+
+    SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],en\". }
+
   
-    }LIMIT 10  """
+    } """
   )
   
   results = sparql.query().bindings
