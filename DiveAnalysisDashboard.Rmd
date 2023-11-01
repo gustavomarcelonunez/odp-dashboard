@@ -368,10 +368,11 @@ Inputs {.sidebar}
 --------------------------------------
 ```{r}
 source_python('queryListOfSpeciesWikidata.py')
-species <<- queryListOfSpecies()
+species <- queryListOfSpecies()
 
 speciesName <- species$name
 speciesID <- species$wikidataID
+speciesNCBIID <- species$NCBIID
 
 selectInput(inputId = "Specie", label = h3("Species from BiGe-Onto Endpoint"),
                   choices = unique(speciesName),
@@ -381,9 +382,14 @@ selectionSpecie <- reactive({
   input$Specie
   })
 
-selectedSpeciesID <- reactive({
+selectedSpecieID <- reactive({
   selectedName <- selectionSpecie()
   speciesID[which(speciesName == selectedName)]
+})
+
+selectedSpeciesNCBIID <- reactive({
+  selectedName <- selectionSpecie()
+  speciesNCBIID[which(speciesName == selectedName)]
 })
 
 ```
@@ -394,7 +400,7 @@ Row
 ```{r}
 source_python('querySpecieWikidata.py')
 renderDataTable({
-  results <<- querySpecie(selectionSpecie())
+  results <- querySpecie(selectionSpecie())
   
   m<<- data.frame(paste0("<a href='",results$item,"'>",results$item,"</a>"),results$scientific_name,results$common_name,paste0("<a href='",results$status,"'>",results$status,"</a>"), paste0("<img src='",results$rangemap,"' height=42></img>"),results$length,results$life_expectency, results$height,results$mass)
 
@@ -411,14 +417,12 @@ Row
 source_python('queryBiodiversityInfoWikidata.py')
 
 renderDataTable({
-  parsedSpecieId <- sub("^.*Q([0-9]+).*$", "\\1", selectedSpeciesID())
+  parsedSpecieId <- sub("^.*Q([0-9]+).*$", "\\1", selectedSpecieID())
   ext_link <- queryBiodiversityInfo(parsedSpecieId)
   
   n <- data.frame(ext_link$propertyLabel,paste0("<a href='",ext_link$link,"'target='_blank'>",ext_link$link,"</a>"))
 
   colnames(n) = c('propertyLabel','link')
-
- # ncbi_id <-n[n$Database == 'NCBI taxonomy ID',] 
 
   DT::datatable(n, class = 'cell-border stripe',fillContainer = T, options = list(autoWidth = FALSE,scrollX = TRUE, width = '100%', dom = 't', pageLength = -1), escape = FALSE)
 })
@@ -426,11 +430,19 @@ renderDataTable({
 
 ### Results from NCBI Taxonomy endpoint
 ```{r}
-reactive({
-  print(species)
-  print(selectionSpecie())
-  print(selectedSpeciesID())
+source_python('queryNCBI_Taxonomy.py')
+renderDataTable({
+  parsedSpecieId <- sub(".*:(\\d+)$", "\\1", selectedSpeciesNCBIID())
+  ext_link <- queryNCBI_Taxonomy(parsedSpecieId)
+  
+  n <- data.frame(attribute = paste0("<a href='", ext_link$attribute, "' target='_blank'>", ext_link$attribute, "</a>"), value = paste0("<a href='", ext_link$value, "' target='_blank'>", ext_link$value, "</a>"))
+ 
+  
+  colnames(n) = c('attribute','value')
+  
+  DT::datatable(n, class = 'cell-border stripe',fillContainer = T, options = list(autoWidth = FALSE,scrollX = TRUE, width = '100%', dom = 't', pageLength = -1), escape = FALSE)
 })
+
 ```
 More
 =====================================

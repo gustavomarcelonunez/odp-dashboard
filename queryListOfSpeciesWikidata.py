@@ -9,18 +9,19 @@ def queryListOfSpecies():
       PREFIX foaf: <http://xmlns.com/foaf/0.1/>
       PREFIX bigeonto: <http://www.w3id.org/cenpat-gilia/bigeonto/>
       PREFIX owl: <http://www.w3.org/2002/07/owl#>
+      PREFIX p: <http://www.wikidata.org/prop/>
   
-      SELECT ?name ?wikidataID
+      SELECT ?taxon ?name ?wikidataID ?NCBIID
       WHERE {
           ?s a dwc:Occurrence.
           ?s dwc:basisOfRecord ?basis.
           ?s bigeonto:associated ?organism.
-          ?organism bigeonto:belongsTo ?taxon.
-          ?taxon dwc:scientificName ?name.
-          ?taxon owl:sameAs ?wikidataID
-       FILTER regex(STR(?basis), \"HumanObservation\")
+	        ?organism bigeonto:belongsTo ?taxon.
+	        ?taxon dwc:scientificName ?name.
+    	    ?taxon owl:sameAs ?wikidataID.
+     	    ?taxon p:P685 ?NCBIID
       }
-      GROUP BY ?name ?wikidataID
+      GROUP BY ?name ?wikidataID ?taxon ?NCBIID
       ORDER BY ?name
   """)
   
