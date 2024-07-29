@@ -65,7 +65,7 @@ SES Dashboard follows the principles of Linked Open Data, allowing data reuse an
 
 ## Licence
 
-This project is licensed under the terms of the [MIT License](LICENSE).
+This project is licensed under the terms of the [MIT License](https://github.com/gustavomarcelonunez/odp-dashboard/blob/main/LICENSE).
 
 ## Contributions
 
