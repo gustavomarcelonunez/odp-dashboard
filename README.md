@@ -67,10 +67,10 @@ SES Dashboard follows the principles of Linked Open Data, allowing data reuse an
 
 This project is licensed under the terms of the [MIT License](LICENSE).
 
-## Contact
+## Contributions
 
 Contributions are welcome! If you have suggestions or find any issues, feel free to open an issue or send a pull request.
 
-## Contacto
+## Contact
 
 For more information, you can [contact me on Twitter](https://twitter.com/MarcosdZarate84).
