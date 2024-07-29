@@ -58,7 +58,7 @@ Para ejecutar la aplicación, sigue estos pasos:
 3. Ejecuta el script principal `SES_Dashboard.Rmd` utilizando RStudio o cualquier entorno compatible con R Markdown.
 
 ```r
-rmarkdown::run("SES_Dashboard.Rmd")
+rmarkdown::run("DiveAnalysisDashboard.Rmd")
 ```
 ## Integración con datos abiertos enlazados (LOD)
 
