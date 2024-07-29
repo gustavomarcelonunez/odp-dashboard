@@ -1,20 +1,20 @@
 # SES Dashboard v1.0.2
 
-SES Dashboard es una plataforma de datos enlazados desarrollada para gestionar información sobre las plataformas marinas (boyas, animales instrumentados, etc.) del Atlántico Sur, específicamente de la colonia de elefantes marinos del sur (Mirounga leonina, Linnaeus 1758) en la Península Valdés, Patagonia, Argentina. Esta aplicación integra datos abiertos enlazados (Linked Open Data, LOD), proporcionando una herramienta robusta para la visualización y análisis de datos marinos.
+SES Dashboard is a linked data platform developed to manage information about marine platforms (buoys, instrumented animals, etc.) in the South Atlantic, specifically the southern elephant seal colony (Mirounga leonina, Linnaeus 1758) at Península Valdés, Patagonia, Argentina. This application integrates Linked Open Data (LOD), providing a robust tool for marine data visualization and analysis.
 
-## Características
+## Features
 
-- **Análisis de plataformas**: Visualiza estadísticas de inmersiones, profundidad máxima, mínima y promedio, y el número total de plataformas e inmersiones.
-- **Sensores y plataformas**: Consulta información detallada sobre los sensores y plataformas, incluyendo fechas de colocación y recuperación, tipo de sensor, fabricante y modelo.
-- **Análisis de inmersiones**: Analiza inmersiones específicas por plataforma, visualizando datos de profundidad, duración, temperatura del fondo y superficie.
-- **Datos de boyas**: Consulta y visualiza datos de boyas, incluyendo altura significativa de olas, velocidad del viento y temperaturas.
-- **Análisis de clusters**: Realiza análisis de clusters utilizando el algoritmo DBSCAN para identificar patrones en los datos geoespaciales.
-- **Estadísticas de censo**: Visualiza el censo de especies por año y categoría.
-- **Datos enlazados**: Accede a información de especies desde puntos de acceso BiGe-Onto y Wikidata, y consulta enlaces a bases de datos de biodiversidad y NCBI Taxonomy.
+- **Platform analysis**: Visualize dive statistics, maximum, minimum, and average depth, and the total number of platforms and dives.
+- **Sensors and platforms**: Query detailed information about sensors and platforms, including placement and recovery dates, sensor type, manufacturer, and model.
+- **Dive analysis**: Analyze specific dives by platform, visualizing depth data, duration, bottom and surface temperature.
+- **Buoy data**: Query and visualize buoy data, including significant wave height, wind speed, and temperatures.
+- **Cluster analysis**: Perform cluster analysis using the DBSCAN algorithm to identify patterns in geospatial data.
+- **Census statistics**: Visualize species census by year and category.
+- **Linked data**: Access species information from BiGe-Onto and Wikidata access points, and query links to biodiversity databases and NCBI Taxonomy.
 
-## Requisitos
+## Requirements
 
-Para ejecutar esta aplicación, asegúrate de tener instalados los siguientes paquetes de R:
+To run this application, make sure you have the following R packages installed:
 
 ```r
 library(flexdashboard)
@@ -39,9 +39,9 @@ library(shinyWidgets)
 library(tidyr)
 library(reticulate)
 ```
-## Archivos de datos
+## Data Files
 
-La aplicación utiliza varios archivos CSV para cargar los datos necesarios:
+The application uses several CSV files to load the necessary data:
 
 - `ALLplatform.csv`
 - `Instruments.csv`
@@ -49,29 +49,28 @@ La aplicación utiliza varios archivos CSV para cargar los datos necesarios:
 - `papers.csv`
 - `data_site_buoy.csv`
 
-## Uso
+## Usage
 
-Para ejecutar la aplicación, sigue estos pasos:
-
-1. Clona el repositorio en tu máquina local.
-2. Asegúrate de tener los paquetes de R mencionados anteriormente instalados.
-3. Ejecuta el script principal `SES_Dashboard.Rmd` utilizando RStudio o cualquier entorno compatible con R Markdown.
+To run the application, follow these steps:
+1. Clone the repository to your local machine.
+2. Make sure you have the aforementioned R packages installed.
+3. Run the main script `SES_Dashboard.Rmd` using RStudio or any R Markdown compatible environment.
 
 ```r
 rmarkdown::run("DiveAnalysisDashboard.Rmd")
 ```
-## Integración con datos abiertos enlazados (LOD)
+## Linked Open Data (LOD) Integration
 
-SES Dashboard sigue los principios de los datos abiertos enlazados, permitiendo la reutilización de datos y ampliando el rango de posibilidades para la investigación y la toma de decisiones en la conservación de especies.
+SES Dashboard follows the principles of Linked Open Data, allowing data reuse and expanding the range of possibilities for research and decision-making in species conservation.
 
-## Licencia
+## Licence
 
-Este proyecto está licenciado bajo los términos de la [MIT License](LICENSE).
+This project is licensed under the terms of the [MIT License](LICENSE).
 
-## Contribuciones
+## Contact
 
-¡Se agradecen las contribuciones! Si tienes sugerencias o encuentras algún problema, no dudes en abrir un issue o enviar un pull request.
+Contributions are welcome! If you have suggestions or find any issues, feel free to open an issue or send a pull request.
 
 ## Contacto
 
-Para más información, puedes [contactarme en Twitter](https://twitter.com/MarcosdZarate84).
+For more information, you can [contact me on Twitter](https://twitter.com/MarcosdZarate84).
