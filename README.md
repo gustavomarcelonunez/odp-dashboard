@@ -73,4 +73,4 @@ Contributions are welcome! If you have suggestions or find any issues, feel free
 
 ## Contact
 
-For more information, you can [contact me on Twitter](https://twitter.com/MarcosdZarate84).
+For more information, you can [contact me on Twitter](https://twitter.com/gmnunezok).
